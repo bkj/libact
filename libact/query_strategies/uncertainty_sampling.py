@@ -95,7 +95,7 @@ class UncertaintySampling(QueryStrategy):
                 "method 'entropy' requires model to be a ProbabilisticModel"
             )
 
-    def make_query(self, return_score=False):
+    def make_query(self, return_score=False, n=1):
         """Return the index of the sample to be queried and labeled and
         selection score of each sample. Read-only.
 
@@ -131,11 +131,11 @@ class UncertaintySampling(QueryStrategy):
 
         elif self.method == 'entropy':
             score = np.sum(-dvalue * np.log(dvalue), axis=1)
-
-        ask_id = np.argmax(score)
-
+            
+        ask_ids = np.argpartition(score, -n)[-n:]
+        ask_ids = ask_ids[np.argsort(score[ask_ids])][::-1]
+        
         if return_score:
-            return unlabeled_entry_ids[ask_id], \
-                   list(zip(unlabeled_entry_ids, score))
+            return np.array(unlabeled_entry_ids)[ask_ids], list(zip(unlabeled_entry_ids, score))
         else:
-            return unlabeled_entry_ids[ask_id]
+            return np.array(unlabeled_entry_ids)[ask_ids]
